@@ -56,6 +56,10 @@ st.markdown(
         letter-spacing: 0;
     }
 
+    h1 a, h2 a, h3 a, h4 a {
+        display: none;
+    }
+
     p, label, span {
         color: var(--ink);
     }
@@ -130,14 +134,6 @@ st.markdown(
         color: var(--leaf-dark);
         font-weight: 750;
         font-size: 13px;
-    }
-
-    .section-card {
-        border: 1px solid rgba(47, 125, 76, 0.16);
-        border-radius: 18px;
-        padding: 22px;
-        background: rgba(255, 255, 255, 0.88);
-        box-shadow: 0 12px 34px rgba(31, 93, 57, 0.10);
     }
 
     .result-card {
@@ -343,7 +339,6 @@ st.write("")
 form_col, result_col = st.columns([1.2, 1])
 
 with form_col:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.subheader("Build Your Crop Scenario")
 
     state = st.selectbox("State", sorted(data["State"].unique()))
@@ -361,7 +356,6 @@ with form_col:
         pesticide = st.number_input("Pesticide (kg/ha)", min_value=0.0, value=2.0, step=0.1)
 
     submitted = st.button("Grow The Prediction", type="primary", use_container_width=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 input_data = {
     "State": state,
@@ -376,17 +370,18 @@ input_data = {
 }
 
 with result_col:
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
-    st.markdown('<div class="tiny-label">Prediction result</div>', unsafe_allow_html=True)
     if submitted:
         predicted_yield, total_production = predict_yield(model_bundle, input_data)
         st.markdown(
             f"""
+            <div class="result-card">
+            <div class="tiny-label">Prediction result</div>
             <div class="result-number">{predicted_yield} ton/ha</div>
             <p class="result-copy">
                 Estimated total production: <strong>{total_production} tons</strong>.
                 This scenario is ready for your project explanation or report screenshot.
             </p>
+            </div>
             """,
             unsafe_allow_html=True,
         )
@@ -394,15 +389,17 @@ with result_col:
     else:
         st.markdown(
             """
+            <div class="result-card">
+            <div class="tiny-label">Prediction result</div>
             <div class="result-number">Ready</div>
             <p class="result-copy">
                 Fill the crop details and click the prediction button to see the estimated yield.
             </p>
+            </div>
             """,
             unsafe_allow_html=True,
         )
 
-    st.markdown("</div>", unsafe_allow_html=True)
     st.write("")
     st.markdown("#### Your Current Inputs")
     st.markdown(
@@ -427,7 +424,6 @@ st.write("")
 chart_col_1, chart_col_2 = st.columns(2)
 
 with chart_col_1:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.subheader("Crop Leaderboard")
     crop_yield = data.groupby("Crop", as_index=False)["Yield_ton_per_ha"].mean()
     fig, ax = plt.subplots(figsize=(8, 4), facecolor="#ffffff")
@@ -438,10 +434,8 @@ with chart_col_1:
     ax.grid(axis="x", color="#dcebdd")
     sns.despine(ax=ax)
     st.pyplot(fig)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with chart_col_2:
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
     st.subheader("Rainfall Glow-Up")
     fig, ax = plt.subplots(figsize=(8, 4), facecolor="#ffffff")
     sns.scatterplot(
@@ -459,7 +453,6 @@ with chart_col_2:
     ax.grid(color="#dcebdd")
     sns.despine(ax=ax)
     st.pyplot(fig)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 with st.expander("Peek at the dataset"):
     st.dataframe(data, use_container_width=True, hide_index=True)
