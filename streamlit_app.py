@@ -1,4 +1,5 @@
-from pathlib import Path
+﻿from pathlib import Path
+from datetime import datetime
 
 import joblib
 import matplotlib.pyplot as plt
@@ -83,7 +84,7 @@ st.markdown(
     }
 
     .hero-wrap:after {
-        content: "🌿";
+        content: "plant lab";
         position: absolute;
         right: 30px;
         top: 20px;
@@ -231,6 +232,13 @@ st.markdown(
         box-shadow: 0 0 0 3px rgba(47, 125, 76, 0.16);
     }
 
+    .hero-wrap:after {
+        content: "plant lab";
+        color: var(--leaf-dark);
+        font-size: 30px;
+        font-weight: 900;
+    }
+
     .stDataFrame {
         border-radius: 16px;
         overflow: hidden;
@@ -265,6 +273,42 @@ st.markdown(
         overflow-wrap: anywhere;
     }
 
+    .suggestion-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .suggestion-card {
+        border: 1px solid rgba(47, 125, 76, 0.16);
+        border-radius: 16px;
+        padding: 14px;
+        background: rgba(255, 255, 255, 0.86);
+        box-shadow: 0 10px 24px rgba(31, 93, 57, 0.07);
+    }
+
+    .suggestion-card strong {
+        display: block;
+        color: var(--leaf-dark);
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .suggestion-card span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .lab-note {
+        border-left: 5px solid var(--leaf);
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--muted);
+    }
+
     @media (max-width: 700px) {
         .hero-wrap {
             padding: 22px;
@@ -275,6 +319,10 @@ st.markdown(
         }
 
         .input-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .suggestion-grid {
             grid-template-columns: 1fr;
         }
     }
@@ -303,24 +351,155 @@ def predict_yield(model_bundle, input_data):
     return round(float(predicted_yield), 2), round(float(total_production), 2)
 
 
+def generate_suggestions(input_data, predicted_yield):
+    suggestions = []
+
+    if input_data["Rainfall_mm"] < 500:
+        suggestions.append(
+            (
+                "Water strategy",
+                "Rainfall is on the lower side. Add irrigation planning, mulching, or drought-tolerant crop choices.",
+            )
+        )
+    elif input_data["Rainfall_mm"] > 1000:
+        suggestions.append(
+            (
+                "Drainage check",
+                "Rainfall is high. Make sure the field has drainage so roots do not stay waterlogged.",
+            )
+        )
+    else:
+        suggestions.append(
+            (
+                "Rainfall fit",
+                "Rainfall is in a balanced range for many seasonal crops. Keep monitoring during flowering and grain filling.",
+            )
+        )
+
+    if input_data["Temperature_C"] > 32:
+        suggestions.append(
+            (
+                "Heat risk",
+                "Temperature is high. Consider heat-tolerant varieties and avoid water stress during peak heat.",
+            )
+        )
+    elif input_data["Temperature_C"] < 20:
+        suggestions.append(
+            (
+                "Cool weather",
+                "Temperature is low. Rabi crops may perform better than heat-loving crops in this condition.",
+            )
+        )
+
+    if input_data["Fertilizer_kg_per_ha"] < 90:
+        suggestions.append(
+            (
+                "Nutrient boost",
+                "Fertilizer input is low. A soil test can help plan balanced NPK application.",
+            )
+        )
+    elif input_data["Fertilizer_kg_per_ha"] > 160:
+        suggestions.append(
+            (
+                "Avoid overuse",
+                "Fertilizer input is high. Too much fertilizer can increase cost and damage soil health.",
+            )
+        )
+
+    if input_data["Pesticide_kg_per_ha"] > 2.5:
+        suggestions.append(
+            (
+                "Pest management",
+                "Pesticide use is high. Try integrated pest management and regular field scouting.",
+            )
+        )
+
+    if input_data["Soil_Type"] in ["Sandy", "Red"]:
+        suggestions.append(
+            (
+                "Soil care",
+                "This soil can benefit from compost or organic matter to improve water and nutrient holding capacity.",
+            )
+        )
+    elif input_data["Soil_Type"] in ["Alluvial", "Loamy"]:
+        suggestions.append(
+            (
+                "Soil advantage",
+                "This soil type is generally crop-friendly. Focus on balanced fertilizer and timely irrigation.",
+            )
+        )
+
+    if predicted_yield < 2.5:
+        suggestions.append(
+            (
+                "Yield improvement",
+                "Predicted yield is modest. Test another crop, improve irrigation, or adjust fertilizer levels.",
+            )
+        )
+    elif predicted_yield >= 5:
+        suggestions.append(
+            (
+                "Strong scenario",
+                "Predicted yield is strong. This is a good scenario to include in your project report.",
+            )
+        )
+
+    return suggestions[:6]
+
+
+def build_prediction_report(record, suggestions):
+    lines = [
+        "Crop Yield Studio - Prediction Report",
+        f"Generated: {record['Timestamp']}",
+        "",
+        "Selected Scenario",
+        f"State: {record['State']}",
+        f"Crop: {record['Crop']}",
+        f"Season: {record['Season']}",
+        f"Soil type: {record['Soil_Type']}",
+        f"Rainfall: {record['Rainfall_mm']} mm",
+        f"Temperature: {record['Temperature_C']} C",
+        f"Fertilizer: {record['Fertilizer_kg_per_ha']} kg/ha",
+        f"Pesticide: {record['Pesticide_kg_per_ha']} kg/ha",
+        f"Area: {record['Area_ha']} ha",
+        "",
+        "Prediction",
+        f"Predicted yield: {record['Predicted_Yield_ton_per_ha']} ton/ha",
+        f"Estimated production: {record['Estimated_Production_tons']} tons",
+        "",
+        "Suggestions",
+    ]
+
+    for title, detail in suggestions:
+        lines.append(f"- {title}: {detail}")
+
+    return "\n".join(lines)
+
+
 data = load_data()
 model_bundle = load_model()
 metrics = model_bundle["metrics"]
 
+if "prediction_lab" not in st.session_state:
+    st.session_state.prediction_lab = []
+
+if "last_prediction" not in st.session_state:
+    st.session_state.last_prediction = None
+
 st.markdown(
     """
     <section class="hero-wrap">
-        <div class="kicker">🌱 AI crop lab</div>
+        <div class="kicker">AI crop lab</div>
         <h1 class="hero-title">Crop Yield Studio</h1>
         <p class="hero-subtitle">
             Predict crop yield with a clean ML dashboard built for quick experiments, lab demos,
             and those "let me test one more input" moments.
         </p>
         <div class="plant-row">
-            <span class="plant-chip">🌾 Yield prediction</span>
-            <span class="plant-chip">🌦️ Rainfall aware</span>
-            <span class="plant-chip">🧪 Fertilizer inputs</span>
-            <span class="plant-chip">📊 Report-ready charts</span>
+            <span class="plant-chip">Yield prediction</span>
+            <span class="plant-chip">Rainfall aware</span>
+            <span class="plant-chip">Fertilizer inputs</span>
+            <span class="plant-chip">Report-ready charts</span>
         </div>
     </section>
     """,
@@ -372,6 +551,18 @@ input_data = {
 with result_col:
     if submitted:
         predicted_yield, total_production = predict_yield(model_bundle, input_data)
+        suggestions = generate_suggestions(input_data, predicted_yield)
+        prediction_record = {
+            "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            **input_data,
+            "Predicted_Yield_ton_per_ha": predicted_yield,
+            "Estimated_Production_tons": total_production,
+        }
+        st.session_state.last_prediction = {
+            "record": prediction_record,
+            "suggestions": suggestions,
+        }
+        st.session_state.prediction_lab.append(prediction_record)
         st.markdown(
             f"""
             <div class="result-card">
@@ -387,18 +578,74 @@ with result_col:
         )
         st.progress(min(predicted_yield / 10, 1.0), text="Yield strength")
     else:
+        last_prediction = st.session_state.last_prediction
+        if last_prediction:
+            record = last_prediction["record"]
+            predicted_yield = record["Predicted_Yield_ton_per_ha"]
+            total_production = record["Estimated_Production_tons"]
+            st.markdown(
+                f"""
+                <div class="result-card">
+                <div class="tiny-label">Latest prediction</div>
+                <div class="result-number">{predicted_yield} ton/ha</div>
+                <p class="result-copy">
+                    Estimated total production: <strong>{total_production} tons</strong>.
+                    Your latest result stays here while you explore downloads and charts.
+                </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.progress(min(predicted_yield / 10, 1.0), text="Yield strength")
+        else:
+            st.markdown(
+                """
+                <div class="result-card">
+                <div class="tiny-label">Prediction result</div>
+                <div class="result-number">Ready</div>
+                <p class="result-copy">
+                    Fill the crop details and click the prediction button to see the estimated yield.
+                </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    if not submitted and not st.session_state.last_prediction:
+        pass
+    elif st.session_state.last_prediction:
+        active_suggestions = st.session_state.last_prediction["suggestions"]
+        st.markdown("#### Smart Suggestions")
         st.markdown(
-            """
-            <div class="result-card">
-            <div class="tiny-label">Prediction result</div>
-            <div class="result-number">Ready</div>
-            <p class="result-copy">
-                Fill the crop details and click the prediction button to see the estimated yield.
-            </p>
-            </div>
-            """,
+            "<div class='suggestion-grid'>"
+            + "".join(
+                f"<div class='suggestion-card'><strong>{title}</strong><span>{detail}</span></div>"
+                for title, detail in active_suggestions
+            )
+            + "</div>",
             unsafe_allow_html=True,
         )
+
+        report_text = build_prediction_report(
+            st.session_state.last_prediction["record"],
+            active_suggestions,
+        )
+        st.download_button(
+            "Download Latest Report",
+            data=report_text,
+            file_name="crop_yield_prediction_report.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+
+    st.markdown(
+        """
+        <div class="lab-note">
+            Every prediction you run is saved in the Prediction Lab below, so you can compare scenarios and download the results.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.write("")
     st.markdown("#### Your Current Inputs")
@@ -420,6 +667,36 @@ with result_col:
     )
 
 st.write("")
+
+st.subheader("Prediction Lab")
+if st.session_state.prediction_lab:
+    lab_df = pd.DataFrame(st.session_state.prediction_lab)
+    st.dataframe(lab_df, use_container_width=True, hide_index=True)
+
+    download_col_1, download_col_2, download_col_3 = st.columns(3)
+    with download_col_1:
+        st.download_button(
+            "Download Lab CSV",
+            data=lab_df.to_csv(index=False),
+            file_name="crop_yield_prediction_lab.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    with download_col_2:
+        st.download_button(
+            "Download Dataset CSV",
+            data=data.to_csv(index=False),
+            file_name="crop_yield_dataset.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    with download_col_3:
+        if st.button("Clear Lab", use_container_width=True):
+            st.session_state.prediction_lab = []
+            st.session_state.last_prediction = None
+            st.rerun()
+else:
+    st.info("Run a prediction to add your first experiment to the lab.")
 
 chart_col_1, chart_col_2 = st.columns(2)
 
@@ -456,3 +733,5 @@ with chart_col_2:
 
 with st.expander("Peek at the dataset"):
     st.dataframe(data, use_container_width=True, hide_index=True)
+
+
