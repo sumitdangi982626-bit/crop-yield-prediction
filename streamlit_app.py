@@ -56,6 +56,16 @@ st.markdown(
         letter-spacing: 0;
     }
 
+    p, label, span {
+        color: var(--ink);
+    }
+
+    div[data-testid="stWidgetLabel"] p,
+    div[data-testid="stWidgetLabel"] label,
+    div[data-testid="stMarkdownContainer"] p {
+        color: var(--ink);
+    }
+
     .hero-wrap {
         border: 1px solid rgba(47, 125, 76, 0.18);
         border-radius: 22px;
@@ -198,11 +208,65 @@ st.markdown(
         border-radius: 14px;
         border-color: var(--line);
         background-color: #ffffff;
+        color: var(--ink);
+        opacity: 1;
+    }
+
+    div[data-baseweb="select"] span,
+    div[data-testid="stNumberInput"] input,
+    input::placeholder {
+        color: var(--ink);
+        -webkit-text-fill-color: var(--ink);
+    }
+
+    div[data-testid="stNumberInput"] button {
+        border-radius: 12px;
+        border: 1px solid rgba(47, 125, 76, 0.18);
+        background: #f3fbf5;
+        color: var(--leaf-dark);
+    }
+
+    div[data-testid="stNumberInput"] button:hover {
+        background: #dff3e5;
+        color: var(--leaf-dark);
+    }
+
+    div[data-testid="stNumberInput"] button:focus {
+        box-shadow: 0 0 0 3px rgba(47, 125, 76, 0.16);
     }
 
     .stDataFrame {
         border-radius: 16px;
         overflow: hidden;
+    }
+
+    .input-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .input-pill {
+        border: 1px solid rgba(47, 125, 76, 0.14);
+        border-radius: 14px;
+        padding: 11px 12px;
+        background: rgba(255, 255, 255, 0.86);
+    }
+
+    .input-pill span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .input-pill strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--ink);
+        font-size: 14px;
+        overflow-wrap: anywhere;
     }
 
     @media (max-width: 700px) {
@@ -212,6 +276,10 @@ st.markdown(
 
         .hero-title {
             font-size: 36px;
+        }
+
+        .input-summary {
+            grid-template-columns: 1fr;
         }
     }
     </style>
@@ -337,7 +405,22 @@ with result_col:
     st.markdown("</div>", unsafe_allow_html=True)
     st.write("")
     st.markdown("#### Your Current Inputs")
-    st.dataframe(pd.DataFrame([input_data]), use_container_width=True, hide_index=True)
+    st.markdown(
+        f"""
+        <div class="input-summary">
+            <div class="input-pill"><span>State</span><strong>{state}</strong></div>
+            <div class="input-pill"><span>Crop</span><strong>{crop}</strong></div>
+            <div class="input-pill"><span>Season</span><strong>{season}</strong></div>
+            <div class="input-pill"><span>Soil</span><strong>{soil_type}</strong></div>
+            <div class="input-pill"><span>Rainfall</span><strong>{rainfall:g} mm</strong></div>
+            <div class="input-pill"><span>Temperature</span><strong>{temperature:g} C</strong></div>
+            <div class="input-pill"><span>Fertilizer</span><strong>{fertilizer:g} kg/ha</strong></div>
+            <div class="input-pill"><span>Pesticide</span><strong>{pesticide:g} kg/ha</strong></div>
+            <div class="input-pill"><span>Area</span><strong>{area:g} ha</strong></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 st.write("")
 
